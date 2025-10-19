@@ -1,90 +1,144 @@
-# Tech Stack Document
+# Tech Stack for codeguide-ems-starter (Educational Management System)
 
-This document explains the key technologies chosen for the **codeguide-starter** project. It’s written in everyday language so anyone—technical or not—can understand why each tool was picked and how it supports the application.
+This document explains, in everyday language, why we chose each technology in the codeguide-ems-starter. It’s designed to be clear for both technical and non-technical readers, showing how everything works together to build a secure, high-performance Educational Management System (EMS).
 
-## 1. Frontend Technologies
-The frontend is everything the user sees and interacts with. For this project, we’ve used:
+## Frontend Technologies
+
+We’ve picked modern, proven tools to build the user interface (UI) you see in the browser:
 
 - **Next.js (App Router)**
-  - A React framework that makes page routing, server-side rendering, and API routes very simple.
-  - Enhances user experience by pre-rendering pages on the server or at build time, leading to faster initial load.
-- **React 18**
-  - The underlying library for building user interfaces with reusable components.
-  - Provides a smooth, interactive experience thanks to its virtual DOM and modern hooks.
+  - A React-based framework that makes pages load fast by doing some work on the server first (Server-Side Rendering). It also helps us organize routes (URLs) in a clear, maintainable way.
+- **React**
+  - The main library for building interactive UIs. It lets us break the UI into small, reusable pieces called components.
 - **TypeScript**
-  - A superset of JavaScript that adds types (labels for data).
-  - Helps catch errors early during development and makes the code easier to maintain.
-- **CSS (globals.css & theme.css)**
-  - **globals.css** applies base styles (fonts, colors, resets) across the entire app.
-  - **dashboard/theme.css** defines the look and feel specific to the dashboard area.
-  - This separation keeps styles organized and avoids accidental style conflicts.
+  - A version of JavaScript that adds “types” (labels for data). This helps catch mistakes early, like trying to add a name to a number.
+- **Tailwind CSS v4**
+  - A utility-first styling framework. Instead of writing long custom CSS, we apply small, reusable classes directly in our HTML-like code.
+- **shadcn/ui**
+  - A set of pre-built, customizable UI components (tables, forms, cards) that we style with Tailwind. This speeds up development and keeps the look consistent.
+- **React Query (@tanstack/react-query)**
+  - Manages data fetching, caching, and updating on the client. It helps keep the UI responsive and minimizes repeated network requests.
+- **Zustand**
+  - A lightweight state management library for more complex client-side interactions (e.g., multi-step forms).
+- **Theming (Light & Dark Mode)**
+  - Built-in support to switch between light and dark color schemes for better user comfort.
 
-By combining these tools, we have a clear structure (Next.js folders for pages and layouts), safer code (TypeScript), and flexible styling with vanilla CSS.
+### How These Enhance User Experience
 
-## 2. Backend Technologies
-The backend handles data, user accounts, and the logic behind the scenes. Our choices here are:
+- Fast load times thanks to server-side rendering and caching.
+- Consistent, responsive design with Tailwind and shadcn/ui.
+- Fewer bugs through TypeScript’s type checks.
+- Smooth data updates and offline support via React Query.
 
+## Backend Technologies
+
+The backend powers core features like login, data storage, and business logic:
+
+- **Node.js (Next.js Server Runtime)**
+  - Runs JavaScript on the server. No separate server framework is needed—Next.js API routes handle HTTP requests natively.
 - **Next.js API Routes**
-  - Allows us to write server-side code (`route.ts` files) alongside our frontend in the same project.
-  - Runs on Node.js, so we can handle requests like sign-up, sign-in, and data fetching in one place.
-- **Node.js Runtime**
-  - The JavaScript environment on the server that executes our API routes.
-- **bcrypt** (npm package)
-  - A library for hashing passwords securely before storing them.
-  - Ensures that even if someone got access to our data, raw passwords aren’t visible.
-- **(Optional) NextAuth.js or JWT**
-  - While this starter kit shows a custom authentication flow, it can easily integrate services like NextAuth.js for email-based login or JWT (JSON Web Tokens) for stateless sessions.
+  - Endpoints under `/app/api` that handle data operations (e.g., sign-in, fetching grades) without spinning up a separate Express server.
+- **Better Auth**
+  - Session-based authentication library. Handles sign-up, sign-in, and secure session cookies.
+- **Drizzle ORM**
+  - A type-safe database toolkit that helps us write SQL queries in TypeScript. It keeps our code tidy and reduces runtime errors.
+- **PostgreSQL**
+  - A reliable, open-source relational database. Stores all EMS data: users, classes, grades, schedules, and more.
+- **Express & Socket.IO**
+  - (Optional extension) If we need real-time features like a chat, we integrate a small Express server with Socket.IO to support persistent WebSocket connections.
+- **Redis**
+  - An in-memory data store used for caching frequently accessed data (e.g., class rosters) to meet performance goals (<500ms responses).
+- **Middleware for RBAC**
+  - Custom Next.js middleware that reads the user’s role from their session and protects routes (e.g., only a `Guru` can access `/guru/*`).
 
-These components work together to receive user credentials, verify or store them securely, manage sessions or tokens, and deliver protected data back to the frontend.
+### How These Components Work Together
 
-## 3. Infrastructure and Deployment
-Infrastructure covers where and how we host the app, as well as how changes get delivered:
+1. User signs in on the frontend.
+2. The request hits a Next.js API route that uses Better Auth to verify credentials against PostgreSQL (via Drizzle).
+3. On success, a secure session cookie is set.
+4. Subsequent page loads fetch user-specific data on the server using Next.js Server Components, ensuring private data never hits the browser.
+5. Redis caches repeat queries to keep response times low.
 
-- **Git & GitHub**
-  - Version control system (Git) and remote hosting (GitHub) keep track of all code changes and allow team collaboration.
-- **Vercel (or Netlify)**
-  - A popular hosting service optimized for Next.js, with one-click deployments and global content delivery.
-  - Automatically rebuilds and deploys the site whenever code is pushed to the main branch.
-- **GitHub Actions (CI/CD)**
-  - Automates tasks like linting (ESLint), formatting (Prettier), and running any tests you add.
-  - Ensures that only clean, tested code goes live.
+## Infrastructure and Deployment
 
-Together, these tools provide a reliable, scalable setup where every code change is tested and deployed quickly, with minimal manual work.
+We’ve set up a containerized, automated pipeline to deploy and maintain the EMS easily:
 
-## 4. Third-Party Integrations
-While this starter kit is minimal by design, it already includes or can easily add:
+- **Docker & Docker Compose**
+  - Package the entire application (frontend, backend, database, Redis) into containers for consistent environments in development and production.
+- **Kubernetes / Docker Swarm (future option)**
+  - For large-scale deployments, we can orchestrate containers across multiple servers.
+- **Version Control: Git & GitHub**
+  - Source code and collaboration are managed with Git. GitHub hosts the repository and allows code reviews.
+- **CI/CD: GitHub Actions**
+  - Automated workflows that run tests, lint code, build Docker images, and deploy to production when changes are merged.
+- **Linting & Formatting**
+  - ESLint and Prettier ensure code consistency and quality before anything reaches production.
+- **Environment Variables**
+  - Sensitive settings (database URLs, API keys) are stored securely, not hard-coded in the codebase.
 
-- **bcrypt**
-  - For secure password hashing (included as an npm dependency).
-- **NextAuth.js** (optional)
-  - A full-featured authentication library supporting email/password, OAuth, and more.
-- **Sentry or LogRocket** (optional)
-  - For real-time error tracking and performance monitoring in production.
+### Benefits for Reliability and Scalability
 
-These integrations help extend the app’s capabilities without building every feature from scratch.
+- **Containers** ensure the app runs the same everywhere.
+- **Automated pipelines** catch errors early and speed up releases.
+- **Orchestration** (Kubernetes) can handle growing traffic effortlessly.
 
-## 5. Security and Performance Considerations
-We’ve baked in several measures to keep users safe and the app running smoothly:
+## Third-Party Integrations
 
-Security:
-- Passwords are never stored in plain text—bcrypt hashes them with a random salt.
-- API routes can implement CSRF protection and input validation to block malicious requests.
-- Session tokens or cookies are marked secure and HttpOnly to prevent theft via JavaScript.
+To extend functionality without reinventing the wheel:
 
-Performance:
-- Server-side rendering (SSR) and static site generation (SSG) in Next.js deliver pages faster.
-- Code splitting and lazy-loaded components ensure users only download what they need.
-- Global CSS and theme files are small and cached by the browser for quick repeat visits.
+- **Better Auth** (Authentication)
+- **AWS S3** (File Storage)
+  - Store and serve uploaded files (e.g., lesson materials) via secure, presigned URLs using the AWS SDK.
+- **Socket.IO** (Real-Time Chat)
+  - Enables live chat or notifications between teachers and students.
+- **Redis** (Caching)
+- **React Query & Zustand** (Client State & Data Management)
+- **Vitest** (Unit Testing) and **Playwright/Cypress** (End-to-End Testing)
+- **GitHub Actions** (CI/CD) and **Docker Hub** (Container Registry)
 
-These strategies work together to give users a fast, secure experience every time.
+### How They Enhance Functionality
 
-## 6. Conclusion and Overall Tech Stack Summary
-In building **codeguide-starter**, we chose technologies that:
+- Secure, scalable file uploads without building a custom storage service.
+- Live chat for instant teacher–student interactions.
+- Fast data access via caching.
+- Robust testing to ensure new features don’t break existing ones.
 
-- Align with modern web standards (Next.js, React, TypeScript).
-- Provide a clear, file-based project structure for rapid onboarding.
-- Offer built-in support for server-side rendering, API routes, and static assets.
-- Emphasize security through password hashing, session management, and safe defaults.
-- Enable easy scaling and future enhancements via modular code and optional integrations.
+## Security and Performance Considerations
 
-This stack strikes a balance between simplicity for newcomers and flexibility for experienced teams. It accelerates development of a secure authentication flow and a polished dashboard, while leaving room to plug in databases, test suites, and advanced features as the project grows.
+### Security Measures
+
+- **Session-Based Authentication**
+  - Secure cookies managed by Better Auth.
+- **Role-Based Access Control (RBAC)**
+  - Middleware checks user roles before granting access to protected routes.
+- **Secure Transport**
+  - HTTPS/TLS for all data in transit.
+- **Environment Variables**
+  - No secrets in code. Keys and passwords stored outside the repository.
+- **SQL Safety**
+  - Type-safe queries with Drizzle ORM to prevent injection attacks.
+
+### Performance Optimizations
+
+- **Server-Side Rendering & Server Components**
+  - Critical data is fetched and rendered on the server, reducing initial load time.
+- **Caching with Redis**
+  - Speeds up repeat database queries for common data.
+- **Code Splitting & Lazy Loading**
+  - Next.js automatically breaks code into smaller chunks for faster page loads.
+- **Database Indexing**
+  - Proper indexes on frequently queried columns (e.g., user IDs, class IDs).
+- **Monitoring & Logging**
+  - Integration with logging tools (e.g., CloudWatch, Grafana) to detect performance bottlenecks.
+
+## Conclusion and Overall Tech Stack Summary
+
+We selected this tech stack to meet the EMS project’s goals: security, performance, scalability, and developer productivity. Key highlights:
+
+- **Next.js + React + TypeScript** for a fast, type-safe frontend.
+- **Better Auth + Next.js API Routes** for a secure, straightforward backend.
+- **Drizzle ORM + PostgreSQL** for reliable, type-safe data management.
+- **Docker + GitHub Actions** for consistent, automated deployments.
+- **Redis, AWS S3, Socket.IO** for high performance and rich features.
+
+This combination delivers a maintainable, scalable foundation that can grow as the EMS project adds new features—everything from grade management to real-time chat—while keeping user data safe and the interface snappy. Feel free to reach out if you have questions about any part of this stack!
