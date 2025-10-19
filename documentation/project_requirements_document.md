@@ -1,117 +1,97 @@
-# Project Requirements Document: codeguide-starter
-
----
+# Project Requirements Document (PRD)
 
 ## 1. Project Overview
 
-The **codeguide-starter** project is a boilerplate web application that provides a ready-made foundation for any web project requiring secure user authentication and a post-login dashboard. It sets up the common building blocks—sign-up and sign-in pages, API routes to handle registration and login, and a simple dashboard interface driven by static data. By delivering this skeleton, it accelerates development time and ensures best practices are in place from day one.
+The Educational Management System (EMS) is a web-based application designed to centralize and simplify school operations for three user groups: Kurikulum (administrators/curriculum planners), Guru (teachers), and Siswa (students). By providing secure, role-specific portals, EMS streamlines tasks such as grade entry, attendance tracking, schedule management, and reporting. This reduces manual paperwork, minimizes data errors, and accelerates communication between staff and learners.
 
-This starter kit is being built to solve the friction developers face when setting up repeated common tasks: credential handling, session management, page routing, and theming. Key objectives include: 1) delivering a fully working authentication flow (registration & login), 2) providing a gated dashboard area upon successful login, 3) establishing a clear, maintainable project structure using Next.js and TypeScript, and 4) demonstrating a clean theming approach with global and section-specific CSS. Success is measured by having an end-to-end login journey in under 200 lines of code and zero runtime type errors.
+EMS is being built to replace scattered spreadsheets and disconnected tools with a unified, scalable platform. Key objectives for the first version include:
 
----
+- Secure session-based authentication and strict role-based access control (RBAC).
+- Three distinct dashboards (Kurikulum, Guru, Siswa) each tailored to the user’s responsibility.
+- CRUD (Create, Read, Update, Delete) operations for core entities: users, classes, subjects, grades, and schedules.
+- Data visualization components for quick insights (e.g., grade charts, attendance summaries).
+- A responsive, modern UI supporting light/dark themes for improved usability.
+
+Success will be measured by: on-time user onboarding, accurate data entry workflows, sub-500ms page load times under typical load, and positive feedback from pilot users.
 
 ## 2. In-Scope vs. Out-of-Scope
 
 ### In-Scope (Version 1)
-- User registration (sign-up) form with validation
-- User login (sign-in) form with validation
-- Next.js API routes under `/api/auth/route.ts` handling:
-  - Credential validation
-  - Password hashing (e.g., bcrypt)
-  - Session creation or JWT issuance
-- Protected dashboard pages under `/dashboard`:
-  - `layout.tsx` wrapping dashboard content
-  - `page.tsx` rendering static data from `data.json`
-- Global application layout in `/app/layout.tsx`
-- Basic styling via `globals.css` and `dashboard/theme.css`
-- TypeScript strict mode enabled
 
-### Out-of-Scope (Later Phases)
-- Integration with a real database (PostgreSQL, MongoDB, etc.)
-- Advanced authentication flows (password reset, email verification, MFA)
-- Role-based access control (RBAC)
-- Multi-tenant or white-label theming
-- Unit, integration, or end-to-end testing suites
-- CI/CD pipeline and production deployment scripts
+- Session-based authentication using Better Auth (sign-up, sign-in, sign-out).
+- Role-based dashboards under `/app/kurikulum`, `/app/guru`, and `/app/siswa`.
+- User management (create, edit, deactivate) limited to Kurikulum role.
+- Class and subject management (CRUD) for Kurikulum.
+- Grade entry and review workflows for Guru.
+- Schedule viewing for all roles; schedule creation/editing for Kurikulum.
+- Basic data tables and charts (using Shadcn/ui components).
+- Database schema definitions for users, classes, subjects, grades, and schedules (PostgreSQL + Drizzle ORM).
+- Light/dark mode toggle via centralized theming.
+- Containerized development environment with Docker and Docker Compose.
+- Basic linting and formatting (ESLint, Prettier).
 
----
+### Out-of-Scope (Phase 2+)
+
+- Real-time chat or messaging between users (Socket.IO).
+- File upload and digital resource management (e.g., lesson plans, assignments).
+- Mobile or native apps (iOS/Android).
+- Advanced analytics or AI-driven insights.
+- API rate limiting or throttling.
+- Internationalization (multi-language support).
+- Automated testing and CI/CD pipelines (to be introduced later).
 
 ## 3. User Flow
 
-A new visitor lands on the root URL and sees a welcome page with options to **Sign Up** or **Sign In**. If they choose Sign Up, they fill in their email, password, and hit “Create Account.” The form submits to `/api/auth/route.ts`, which hashes the password, creates a new user session or token, and redirects them to the dashboard. If any input is invalid, an inline error message explains the issue (e.g., “Password too short”).
+A new user (e.g., a teacher) receives an account invitation or self-registers on `/sign-up`. They set a password and verify their email. After registration, they are redirected to `/sign-in`, enter their credentials, and initiate a session. Once authenticated, middleware checks their `role` in the database and routes them to the correct dashboard (`/guru/dashboard`). The left sidebar presents navigation links like “My Classes,” “Enter Grades,” and “Profile.” The main panel fetches data on the server (Server Component) and displays a list of classes or recent notifications.
 
-Once authenticated, the user is taken to the `/dashboard` route. Here they see a sidebar or header defined by `dashboard/layout.tsx`, and the main panel pulls in static data from `data.json`. They can log out (if that control is present), but otherwise their entire session is managed by server-side cookies or tokens. Returning users go directly to Sign In, submit credentials, and upon success they land back on `/dashboard`. Any unauthorized access to `/dashboard` redirects back to Sign In.
-
----
+From the dashboard, a teacher clicks “Enter Grades,” lands on a data table showing students and assessments for a selected class. They input scores, hit “Save,” and the system updates the PostgreSQL database through a Drizzle ORM query. If a curriculum planner logs in, they see “Manage Users,” “Manage Classes,” and “View Reports” instead. A student logging in sees “My Grades,” “My Schedule,” and a chart of their semester performance. At any point, the user can toggle light/dark mode, open the profile menu to sign out, or navigate back to their dashboard.
 
 ## 4. Core Features
 
-- **Sign-Up Page (`/app/sign-up/page.tsx`)**: Form fields for email & password, client-side validation, POST to `/api/auth`.
-- **Sign-In Page (`/app/sign-in/page.tsx`)**: Form fields for email & password, client-side validation, POST to `/api/auth`.
-- **Authentication API (`/app/api/auth/route.ts`)**: Handles both registration and login based on HTTP method, integrates password hashing (bcrypt) and session or JWT logic.
-- **Global Layout (`/app/layout.tsx` + `globals.css`)**: Shared header, footer, and CSS resets across all pages.
-- **Dashboard Layout (`/app/dashboard/layout.tsx` + `dashboard/theme.css`)**: Sidebar or top nav for authenticated flows, section-specific styling.
-- **Dashboard Page (`/app/dashboard/page.tsx`)**: Reads `data.json`, renders it as cards or tables.
-- **Static Data Source (`/app/dashboard/data.json`)**: Example dataset to demo dynamic rendering.
-- **TypeScript Configuration**: `tsconfig.json` with strict mode and path aliases (if any).
-
----
+- **Authentication & RBAC**: Secure sign-up/sign-in flows using Better Auth; middleware enforces route protection based on user roles.
+- **Kurikulum Portal**: User management (create/edit/deactivate), class and subject management, schedule builder, and report overview.
+- **Guru Portal**: Class roster view, grade entry interface, attendance tracker (future), and personal profile.
+- **Siswa Portal**: View grades, view schedule, and performance charts.
+- **Data Visualization**: Charts (e.g., line, bar) for grades and attendance using Shadcn/ui.
+- **Theming**: Auto-detect system theme; manual toggle between light and dark modes.
+- **Database & ORM**: Type-safe schemas and queries using Drizzle ORM on PostgreSQL.
+- **Modular UI Components**: Reusable components (DataTable, Chart, Sidebar) with Tailwind CSS styling.
+- **Containerization**: Local development via Docker Compose, including Node.js, PostgreSQL, and Redis placeholder.
 
 ## 5. Tech Stack & Tools
 
-- **Framework**: Next.js (App Router) for file-based routing, SSR/SSG, and API routes.
-- **Language**: TypeScript for type safety.
-- **UI Library**: React 18 for component-based UI.
-- **Styling**: Plain CSS via `globals.css` (global reset) and `theme.css` (sectional styling). Can easily migrate to CSS Modules or Tailwind in the future.
-- **Backend**: Node.js runtime provided by Next.js API routes.
-- **Password Hashing**: bcrypt (npm package).
-- **Session/JWT**: NextAuth.js or custom JWT logic (to be decided in implementation).
-- **IDE & Dev Tools**: VS Code with ESLint, Prettier extensions. Optionally, Cursor.ai for AI-assisted coding.
-
----
+- **Frontend**: Next.js (App Router) + React, TypeScript, Tailwind CSS v4, Shadcn/ui.
+- **Backend**: Next.js API routes (serverless functions) on Node.js, Better Auth for sessions.
+- **Database**: PostgreSQL with Drizzle ORM (type-safe query builder).
+- **Containerization**: Docker & Docker Compose.
+- **Development Tools**: VS Code (recommended), ESLint, Prettier.
+- **Potential Integrations Later**: Redis for caching, Socket.IO for real-time, AWS SDK for file uploads.
 
 ## 6. Non-Functional Requirements
 
-- **Performance**: Initial page load under 200 ms on a standard broadband connection. API responses under 300 ms.
-- **Security**:
-  - HTTPS only in production.
-  - Proper CORS, CSRF protection for API routes.
-  - Secure password storage (bcrypt with salt).
-  - No credentials or secrets checked into version control.
-- **Scalability**: Structure must support adding database integration, caching layers, and advanced auth flows without rewiring core app.
-- **Usability**: Forms should give real-time feedback on invalid input. Layout must be responsive (mobile > 320 px).
-- **Maintainability**: Code must adhere to TypeScript strict mode. Linting & formatting enforced by ESLint/Prettier.
-
----
+- **Performance**: Page loads under 500ms for common views; database queries optimized via indexes.
+- **Security**: HTTPS-only, secure cookies, session timeouts, RBAC checks on every API route.
+- **Reliability**: Automatic retries on transient database errors; health-check endpoints in Docker.
+- **Usability**: Responsive design for desktop and tablet; clear error messages and form validations.
+- **Scalability**: Stateless API routes, containerized services; later add auto-scaling.
+- **Maintainability**: Consistent TypeScript types, modular folder structure, JSDoc/TSDoc comments on complex logic.
 
 ## 7. Constraints & Assumptions
 
-- **No Database**: Dashboard uses only `data.json`; real database integration is deferred.
-- **Node Version**: Requires Node.js >= 14.
-- **Next.js Version**: Built on Next.js 13+ App Router.
-- **Authentication**: Assumes availability of bcrypt or NextAuth.js at implementation time.
-- **Hosting**: Targets serverless or Node.js-capable hosting (e.g., Vercel, Netlify).
-- **Browser Support**: Modern evergreen browsers; no IE11 support required.
-
----
+- **Better Auth Availability**: Assumes the Better Auth service is reliably available; fallback to JWT is not yet implemented.
+- **Monolithic Architecture**: All API routes run in Next.js; no separate microservices for Version 1.
+- **Browser Compatibility**: Modern browsers only (Chrome, Firefox, Safari, Edge).
+- **Data Volume**: Initial pilot with up to 1,000 users and 10,000 grade records; performance tuned for this scale.
+- **Infrastructure**: Development and production use Docker; production orchestration (Kubernetes) is assumed but not yet configured.
 
 ## 8. Known Issues & Potential Pitfalls
 
-- **Static Data Limitation**: `data.json` is only for demo. A real API or database will be needed to avoid stale data.
-  *Mitigation*: Define a clear interface for data fetching so swapping to a live endpoint is trivial.
-
-- **Global CSS Conflicts**: Using global styles can lead to unintended overrides.
-  *Mitigation*: Plan to migrate to CSS Modules or utility-first CSS in Phase 2.
-
-- **API Route Ambiguity**: Single `/api/auth/route.ts` handling both sign-up and sign-in could get complex.
-  *Mitigation*: Clearly branch on HTTP method (`POST /register` vs. `POST /login`) or split into separate files.
-
-- **Lack of Testing**: No test suite means regressions can slip in.
-  *Mitigation*: Build a minimal Jest + React Testing Library setup in an early iteration.
-
-- **Error Handling Gaps**: Client and server must handle edge cases (network failures, malformed input).
-  *Mitigation*: Define a standard error response schema and show user-friendly messages.
+- **API Rate Limits**: Next.js serverless API routes may throttle under heavy traffic. Mitigation: plan for Redis caching and possibly move to a dedicated Node.js server.
+- **Session Management Edge Cases**: Session expiry may log out active users unexpectedly. Mitigation: implement silent token refresh or warn users before timeout.
+- **Database Schema Migrations**: Adding new columns or tables can cause downtime if not handled carefully. Mitigation: use Drizzle’s migration tooling and zero-downtime patterns.
+- **Role Escalation Risk**: Improper RBAC configuration could let lower-privileged roles access higher-privileged data. Mitigation: write unit tests for middleware and API route guards.
+- **UI Performance with Large Data**: Rendering large tables on the client can be slow. Mitigation: implement server-side pagination and virtualized tables in future iterations.
 
 ---
 
-This PRD should serve as the single source of truth for the AI model or any developer generating the next set of technical documents: Tech Stack Doc, Frontend Guidelines, Backend Structure, App Flow, File Structure, and IDE Rules. It contains all functional and non-functional requirements with no ambiguity, enabling seamless downstream development.
+This PRD captures the core requirements for EMS Version 1 and provides a clear roadmap for development. Subsequent technical documents (Tech Stack Document, Frontend Guidelines, Backend Structure) can be derived directly from these specifications without ambiguity.
